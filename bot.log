@@ -3,3 +3,20 @@ nohup: ignoring input
 2026-09-22 08:06:22,439 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/deleteWebhook "HTTP/1.1 200 OK"
 2026-09-22 08:06:22,441 - telegram.ext.Application - INFO - Application started
 2026-09-22 08:06:32,985 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:06:43,168 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:06:49,216 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:06:49,944 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/sendChatAction "HTTP/1.1 200 OK"
+2026-09-22 08:06:50,639 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/sendMessage "HTTP/1.1 200 OK"
+2026-09-22 08:06:59,400 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:07:09,693 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:07:19,876 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:07:30,523 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:07:40,705 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:07:50,886 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:08:01,068 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:08:05,739 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8937535527:AAEr8QjhbpVZAvsk0k-PeMBrVQ-OnIFKhM4/getUpdates "HTTP/1.1 200 OK"
+2026-09-22 08:08:05,740 - telegram.ext.Application - INFO - Application is stopping. This might take a moment.
+2026-09-22 08:08:05,740 - telegram.ext.Application - INFO - Application.stop() complete
+Web Server active on port 8080
+হার্মিস বটটি সফলভাবে চালু হয়েছে...
+Connection Error: Expecting value: line 1 column 1 (char 0)
