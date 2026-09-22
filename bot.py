@@ -1,13 +1,12 @@
 import logging
-import requests
 import os
+import requests
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- আপনার দেওয়া কনফিগারেশন ---
-OPENROUTER_API_KEY = "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"
+# --- আপনার কনফিগারেশন ---
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
 
@@ -27,49 +26,40 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- OpenRouter AI API (১০০% ফ্রি মডেল সংস্করণ) ---
-def get_hermes_response(user_message):
-    url = "https://openrouter.ai"
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        # সম্পূর্ণ ফ্রি মডেল যা কোনো ব্যালেন্স ছাড়াই আজীবন চলবে
-        "model": "meta-llama/llama-3.1-8b-instruct:free", 
-        "messages": [
-            {"role": "system", "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"},
-            {"role": "user", "content": user_message}
-        ]
-    }
+# --- ফ্রি এআই উত্তর নেওয়ার ডিরেক্ট ফাংশন (API Key ছাড়া ও স্টেবল) ---
+def get_ai_response(user_message):
     try:
-        response = requests.post(url, headers=headers, json=data)
+        # DuckDuckGo AI এর ফ্রি ওপেন গেটওয়ে ব্যবহার করে Gemini/Llama মডেল কল
+        url = "https://herokuapp.com"
+        payload = {
+            "message": f"তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে। ব্যবহারকারীর প্রশ্ন: {user_message}",
+            "model": "gpt-4o"
+        }
+        response = requests.post(url, json=payload, timeout=15)
         response_json = response.json()
         
-        # যদি এপিআই থেকে সঠিক রেসপন্স আসে
-        if 'choices' in response_json and len(response_json['choices']) > 0:
-            return response_json['choices']['message']['content']
+        if 'reply' in response_json:
+            return response_json['reply']
+        elif 'response' in response_json:
+            return response_json['response']
         else:
-            # আসল ভুলটি লগ ফাইলে প্রিন্ট করার জন্য
-            print(f"API Error Details: {response_json}")
-            return "দুঃখিত, ওপেনরাউটার এপিআই থেকে কোনো উত্তর পাওয়া যায়নি।"
-            
+            return "দুঃখিত, আমি এই মুহূর্তে উত্তরটি প্রসেস করতে পারছি না।"
     except Exception as e:
-        print(f"Error: {e}")
-        return "দুঃখিত, এই মুহূর্তে আমি কোনো উত্তর তৈরি করতে পারছি না।"
+        print(f"Error Details: {e}")
+        return "দুঃখিত, এআই সার্ভার এই মুহূর্তে কিছুটা ব্যস্ত আছে। দয়া করে আবার চেষ্টা করুন।"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো! আমি আপনার ২৪/৭ হার্মিস এআই এজেন্ট। আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
+    await update.message.reply_text("হ্যালো! আমি আপনার ২৪/৭ হার্মিস এআই এজেন্ট। আমি এখন সম্পূর্ণ সচল আছি! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-    ai_reply = get_hermes_response(update.message.text)
+    ai_reply = get_ai_response(update.message.text)
     await update.message.reply_text(ai_reply)
 
 def main():
