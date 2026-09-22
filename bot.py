@@ -1,13 +1,15 @@
 import logging
 import os
 import threading
-import http.client
-import json
-import urllib.parse
 import asyncio
+import nest_asyncio
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from g4f.client import Client
+
+# Asyncio এর প্রক্সি লক এড়ানোর জন্য
+nest_asyncio.apply()
 
 # --- আপনার টেলিগ্রাম কনফিগারেশন ---
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
@@ -29,48 +31,24 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- সম্পূর্ণ ফ্রি ও নেটওয়ার্ক-সেফ ডিরেক্ট ক্লাস্টার (কোনো API Key লাগবে না) ---
+# --- সম্পূর্ণ ফ্রি ও নেটওয়ার্ক-সেফ এআই ইঞ্জিন (কোনো API Key লাগবে না) ---
 def fetch_ai_data(user_message):
-    conn = None
     try:
-        # কোডস্পেস নেটওয়ার্ক ব্লক এড়াতে সম্পূর্ণ আলাদা ফ্রেশ গেটওয়ে
-        conn = http.client.HTTPSConnection("text.pollinations.ai", timeout=15)
-        
-        system_prompt = "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
-        
-        # জেসন ফরম্যাট ব্যবহার করে নিরাপদভাবে ডেটা পাঠানো (যাতে ক্যারেক্টার লিক না হয়)
-        payload = {
-            "messages": [
-                {"role": "system", "content": system_prompt},
+        client = Client()
+        response = client.chat.completions.create(
+            model="gpt-4o", # সম্পূর্ণ ফ্রি এবং নেটওয়ার্ক ফ্রেন্ডলি স্টেবল মডেল
+            messages=[
+                {"role": "system", "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"},
                 {"role": "user", "content": user_message}
-            ],
-            "model": "searchgpt", # এটি নেটওয়ার্ক ফ্রেন্ডলি এবং সুপার-ফাস্ট ব্যাকএন্ড
-            "jsonMode": False
-        }
-        
-        headers = {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': '*/*',
-            'Connection': 'close'
-        }
-        
-        conn.request("POST", "/", body=json.dumps(payload), headers=headers)
-        response = conn.getresponse()
-        data = response.read()
-        
-        if response.status == 200:
-            result = data.decode('utf-8').strip()
-            if result:
-                return result
-        return "দুঃখিত, এআই প্রসেস করতে কিছুটা সময় নিচ্ছে। আবার মেসেজ দিন।"
-            
+            ]
+        )
+        reply = response.choices[0].message.content
+        if reply:
+            return reply.strip()
+        return "দুঃখিত, কোনো উত্তর পাওয়া যায়নি।"
     except Exception as e:
-        print(f"Internal Details: {e}")
-        return "সার্ভার এই মুহূর্তে একটু রিফ্রেশ হচ্ছে। অনুগ্রহ করে আর একবার মেসেজ দিন।"
-    finally:
-        if conn:
-            conn.close()
+        print(f"Internal AI Error: {e}")
+        return "দুঃখিত, এআই সার্ভার এই মুহূর্তে কিছুটা ব্যস্ত। দয়া করে আর একবার চেষ্টা করুন।"
 
 # --- নন-ব্লকিং ব্যাকগ্রাউন্ড থ্রেড রানার ---
 async def get_ai_response(user_message):
@@ -81,7 +59,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো এডাম! আমি আপনার হার্মিস এআই অ্যাসিস্ট্যান্ট। কোনো এপিআই কি-এর ঝামেলা ছাড়াই আমি এখন ১০০% নিখুঁতভাবে সচল আছি! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
+    await update.message.reply_text("হ্যালো এডাম! আমি আপনার হার্মিস এআই অ্যাসিস্ট্যান্ট। কোনো এপিআই কি-এর ঝামেলা ছাড়াই আমি এখন ১০০% স্থায়ীভাবে সচল আছি! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
