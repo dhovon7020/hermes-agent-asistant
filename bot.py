@@ -10,6 +10,9 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
 
+# টার্মিনাল বা সিক্রেট থেকে নিরাপদভাবে API Key নেওয়া
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "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")
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 # --- ২৪/৭ সচল রাখার ওয়েব সার্ভার ---
@@ -26,33 +29,42 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- ফ্রি এআই উত্তর নেওয়ার ডিরেক্ট ফাংশন (API Key ছাড়া ও স্টেবল) ---
+# --- OpenRouter অফিসিয়াল ফ্রি এআই ইঞ্জিন ---
 def get_ai_response(user_message):
     try:
-        # DuckDuckGo AI এর ফ্রি ওপেন গেটওয়ে ব্যবহার করে Gemini/Llama মডেল কল
-        url = "https://herokuapp.com"
-        payload = {
-            "message": f"তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে। ব্যবহারকারীর প্রশ্ন: {user_message}",
-            "model": "gpt-4o"
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
         }
-        response = requests.post(url, json=payload, timeout=15)
+        
+        # openrouter/free হচ্ছে তাদের অফিশিয়াল ফ্রি রাউটার, যা কখনই ওভারলোড হয় না
+        payload = {
+            "model": "openrouter/free", 
+            "messages": [
+                {"role": "system", "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"},
+                {"role": "user", "content": user_message}
+            ]
+        }
+        
+        response = requests.post(url, headers=headers, json=payload, timeout=20)
         response_json = response.json()
         
-        if 'reply' in response_json:
-            return response_json['reply']
-        elif 'response' in response_json:
-            return response_json['response']
+        if 'choices' in response_json and len(response_json['choices']) > 0:
+            return response_json['choices']['message']['content']
         else:
-            return "দুঃখিত, আমি এই মুহূর্তে উত্তরটি প্রসেস করতে পারছি না।"
+            print(f"Debug Info: {response_json}")
+            return "দুঃখিত, এআই প্রোভাইডার রেসপন্স করতে পারছে না। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
+            
     except Exception as e:
         print(f"Error Details: {e}")
-        return "দুঃখিত, এআই সার্ভার এই মুহূর্তে কিছুটা ব্যস্ত আছে। দয়া করে আবার চেষ্টা করুন।"
+        return "দুঃখিত, কানেকশন টাইমআউট হয়েছে। আবার মেসেজ পাঠান।"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো! আমি আপনার ২৪/৭ হার্মিস এআই এজেন্ট। আমি এখন সম্পূর্ণ সচল আছি! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
+    await update.message.reply_text("হ্যালো! আমি আপনার অফিসিয়াল হার্মিস এআই এজেন্ট। আমি এখন শতভাগ সচল! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
@@ -63,7 +75,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(ai_reply)
 
 def main():
-    # ব্যাকগ্রাউন্ডে ওয়েব সার্ভার চালু করা
     threading.Thread(target=run_web_server, daemon=True).start()
 
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
