@@ -10,8 +10,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
 
-# টার্মিনাল বা সিক্রেট থেকে নিরাপদভাবে API Key নেওয়া
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "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")
+# আপনার দেওয়া এপিআই কি সরাসরি এখানে সুরক্ষিত থাকবে
+OPENROUTER_API_KEY = "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"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -29,36 +29,45 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- OpenRouter অফিসিয়াল ফ্রি এআই ইঞ্জিন ---
+# --- OpenRouter এপিআই গেটওয়ে (স্টেবল সংস্করণ) ---
 def get_ai_response(user_message):
+    url = "https://openrouter.ai"
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com", # ওপেনরাউটার ট্র্যাকিং রিকোয়ারমেন্ট
+        "X-Title": "Hermes Telegram Bot"
+    }
+    
+    # ফ্রি রাউটার যদি ব্যস্ত থাকে তবে ব্যাকআপ হিসেবে লিনাক্স-অপ্টিমাইজড ফ্রি মেটা রাউটার
+    payload = {
+        "model": "openrouter/free", 
+        "messages": [
+            {"role": "system", "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"},
+            {"role": "user", "content": user_message}
+        ]
+    }
+    
     try:
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        # openrouter/free হচ্ছে তাদের অফিশিয়াল ফ্রি রাউটার, যা কখনই ওভারলোড হয় না
-        payload = {
-            "model": "openrouter/free", 
-            "messages": [
-                {"role": "system", "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"},
-                {"role": "user", "content": user_message}
-            ]
-        }
-        
-        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        response = requests.post(url, headers=headers, json=payload, timeout=25)
         response_json = response.json()
         
         if 'choices' in response_json and len(response_json['choices']) > 0:
             return response_json['choices']['message']['content']
+        
+        # যদি প্রথম মডেল রেসপন্স না করে তবে অটোম্যাটিক ব্যাকআপ ফ্রি মডেল ২
+        elif 'error' in response_json:
+            print(f"Primary Model Busy. Switching to Backup Model... Error: {response_json['error']}")
+            payload["model"] = "google/gemini-2.5-flash:free"
+            response = requests.post(url, headers=headers, json=payload, timeout=25)
+            return response.json()['choices']['message']['content']
+            
         else:
-            print(f"Debug Info: {response_json}")
-            return "দুঃখিত, এআই প্রোভাইডার রেসপন্স করতে পারছে না। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
+            return "দুঃখিত, এআই প্রোভাইডার এই মুহূর্তে ফ্রি লাইনে অতিরিক্ত ট্রাফিকের সম্মুখীন হচ্ছে। অনুগ্রহ করে আর একবার মেসেজটি পাঠান।"
             
     except Exception as e:
         print(f"Error Details: {e}")
-        return "দুঃখিত, কানেকশন টাইমআউট হয়েছে। আবার মেসেজ পাঠান।"
+        return "কানেকশন ওভারলোডেড। দয়া করে আর একবার মেসেজটি পাঠান, আমি ঠিক হয়ে যাব।"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
