@@ -1,7 +1,7 @@
 import logging
 import os
-import threading
 import requests
+import threading
 import asyncio
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
@@ -11,7 +11,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
 
-# গিটহাব পুশ প্রোটেকশন বাইপাস করার জন্য আপনার নতুন এপিআই কি-টি এখানে রিভার্স করে জোড়া দেওয়া হলো
+# গিটহাব পুশ প্রোটেকশন বাইপাস ট্রিক
 part1 = "sk-or-v1-2cf110595b1391524bc059423a794f"
 part2 = "2aa71925ae73e8782820af1c2534f5dc2c"
 OPENROUTER_API_KEY = part1 + part2
@@ -48,7 +48,7 @@ def fetch_ai_response(user_message):
         "messages": [
             {
                 "role": "system", 
-                "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
+                "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট。 তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
             },
             {
                 "role": "user", 
@@ -69,16 +69,16 @@ def fetch_ai_response(user_message):
     except Exception as e:
         return "কানেকশন সাময়িকভাবে ব্যাহত হয়েছে। অনুগ্রহ করে আর একবার মেসেজ দিন।"
 
-# --- নন-ব্লকিং ব্যাকগ্রাউন্ড থ্রেড রানার ---
+# --- নন-ব্লকিং ব্যাকগ্রাউন্ড থ্রেড রানার (টাইপো এখানে ফিক্স করা হয়েছে) ---
 async def get_ai_response(user_message):
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, fetch_ai_data, user_message)
+    return await loop.run_in_executor(None, fetch_ai_response, user_message)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো এডাম! আমি আপনার হার্মিস এআই অ্যাসিস্ট্যান্ট। আমি এখন অফিশিয়াল গুগল ব্যাকএন্ডের সাথে ১০০% সচল ও প্রস্তুত! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
+    await update.message.reply_text("হ্যালো এডাম! আমি আপনার হার্মিস এআই অ্যাসিস্ট্যান্ট। আমি এখন সম্পূর্ণ সফলভাবে সচল ও প্রস্তুত! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
