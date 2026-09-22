@@ -1,8 +1,7 @@
 import logging
 import os
+import requests
 import threading
-import http.client
-import json
 import asyncio
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
@@ -12,7 +11,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
 
-# আপনার ওপেনরাউটার এপিআই কি (গিটহাব প্রটেকশন এড়াতে আমরা এটিকে কোড থেকে নিরাপদ রেখেছি)
+# আপনার ওপেনরাউটার এপিআই কি
 OPENROUTER_API_KEY = "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"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -31,67 +30,66 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- অফিসিয়াল ফ্রি Hermes 3 এআই ইঞ্জিন মেথড ---
-def fetch_hermes_free(user_message):
-    conn = None
+# --- অফিসিয়াল ফ্রি Hermes 3 এআই ইঞ্জিন (স্টেবল রিকোয়েস্ট মেথড) ---
+def fetch_hermes_response(user_message):
+    url = "https://openrouter.ai"
+    
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com",
+        "X-Title": "Hermes Telegram Bot"
+    }
+    
+    # NousResearch এর অফিসিয়াল ফ্রী Hermes 3 (405B) মডেল আইডি
+    payload = {
+        "model": "nousresearch/hermes-3-llama-3.1-405b:free",
+        "messages": [
+            {
+                "role": "system", 
+                "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
+            },
+            {
+                "role": "user", 
+                "content": user_message
+            }
+        ]
+    }
+    
     try:
-        # ওপেনরাউটার এর সাথে সরাসরি এপিআই কানেকশন
-        conn = http.client.HTTPSConnection("openrouter.ai", timeout=25)
+        # রিকোয়েস্টে স্টেবল রিকোয়েস্ট লাইব্রেরি ব্যবহার
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response_json = response.json()
         
-        system_prompt = "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
-        
-        # অফিসিয়াল Hermes 3 ফ্রি মডেল আইডি পেলোড
-        payload = {
-            "model": "nousresearch/hermes-3-llama-3.1-405b:free", 
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ]
-        }
-        
-        headers = {
-            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://github.com',
-            'X-Title': 'Hermes Telegram Bot',
-            'Connection': 'close'
-        }
-        
-        conn.request("POST", "/api/v1/chat/completions", body=json.dumps(payload), headers=headers)
-        response = conn.getresponse()
-        data = response.read()
-        
-        if response.status == 200:
-            res_json = json.loads(data.decode('utf-8'))
-            if 'choices' in res_json and len(res_json['choices']) > 0:
-                return res_json['choices']['message']['content'].strip()
-            return "দুঃখিত, এআই কোনো উত্তর তৈরি করতে পারেনি।"
+        if 'choices' in response_json and len(response_json['choices']) > 0:
+            return response_json['choices']['message']['content'].strip()
         else:
-            print(f"API Error Status: {response.status}, Data: {data.decode('utf-8')}")
-            return "সার্ভার এই মুহূর্তে কিছুটা ব্যস্ত। অনুগ্রহ করে আর একবার মেসেজ দিন।"
+            print(f"API Debug Logs: {response_json}")
+            return "দুঃখিত, এআই প্রোভাইডার এই মুহূর্তে ফ্রি লাইনে অতিরিক্ত ট্রাফিকের সম্মুখীন হচ্ছে। অনুগ্রহ করে আর একবার মেসেজটি পাঠান।"
             
     except Exception as e:
-        print(f"Error Details: {e}")
-        return "কানেকশন রিস্টার্ট হচ্ছে। দয়া করে আর একবার মেসেজ দিন।"
-    finally:
-        if conn:
-            conn.close()
+        print(f"Connection Error: {e}")
+        return "কানেকশন সাময়িকভাবে ব্যাহত হয়েছে। অনুগ্রহ করে আর একবার মেসেজ দিন।"
 
+# --- নন-ব্লকিং ব্যাকগ্রাউন্ড থ্রেড রানার ---
 async def get_ai_response(user_message):
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, fetch_hermes_free, user_message)
+    return await loop.run_in_executor(None, fetch_hermes_response, user_message)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো এডাম! আমি আপনার অফিশিয়াল ফ্রী 'Hermes 3' এআই অ্যাসিস্ট্যান্ট। আমি এখন সম্পূর্ণ সচল ও প্রস্তুত! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
+    await update.message.reply_text("হ্যালো এডাম! আমি আপনার অফিশিয়াল ফ্রি 'Hermes 3' এআই অ্যাসিস্ট্যান্ট। আমি এখন সম্পূর্ণ নতুন ফ্রেমওয়ার্কের সাথে ১০০% সচল আছি! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
+    
+    # বট টাইপিং অ্যানিমেশন দেখাবে
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+    
     ai_reply = await get_ai_response(update.message.text)
     await update.message.reply_text(ai_reply)
 
