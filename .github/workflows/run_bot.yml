@@ -1,0 +1,17 @@
+name: Keep Codespace Alive 24/7
+
+on:
+  schedule:
+    # এটি প্রতি ৫ মিনিট পর পর স্বয়ংক্রিয়ভাবে রান হবে
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # ম্যানুয়ালি টেস্ট করার জন্য
+
+jobs:
+  ping-codespace:
+    runs-on: ubuntu-latest
+    steps:
+       Cab Send Ping Request
+      - name: Ping Codespace URL
+        run: |
+          curl -s "${{ secrets.CODESPACE_URL }}"
+          echo "Codespace successfully pinged at $(date)"
