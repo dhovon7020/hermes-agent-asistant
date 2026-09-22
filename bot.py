@@ -28,7 +28,7 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- এপিআই কী মুক্ত হাই-স্পিড ডিরেক্ট এআই ইঞ্জিন ---
+# --- এপিআই কী মুক্ত হাই-স্পিড ডিরেক্ট এআই ইঞ্জিন (১০০% ফিক্সড সিনট্যাক্স) ---
 def fetch_ai_data(user_message):
     conn = None
     try:
@@ -50,18 +50,18 @@ def fetch_ai_data(user_message):
         }
         
         conn.request("GET", path, headers=headers)
-        response = conn.getcall = conn.getresponse()
+        response = conn.getresponse() # সিনট্যাক্স এখানে সম্পূর্ণ ঠিক করা হয়েছে
         data = response.read()
         
         if response.status == 200:
             result = data.decode('utf-8').strip()
             if result:
                 return result
-        return "দুঃখিত, এআই প্রসেস করতে কিছুটা সময় নিচ্ছে। অনুগ্রহ করে আর একবার মেসেজ দিন।"
+        return "দুঃখিত, এআই সার্ভার রেসপন্স করতে পারছে না।"
             
     except Exception as e:
         print(f"Error Details: {e}")
-        return "সার্ভার রিফ্রেশ হচ্ছে। দয়া করে আর একবার মেসেজ দিন।"
+        return "সার্ভার এই মুহূর্তে বিজি আছে।"
     finally:
         if conn:
             conn.close()
