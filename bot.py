@@ -6,12 +6,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- আপনার কনফিগারেশন ---
+# --- আপনার টেলিগ্রাম কনফিগারেশন ---
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
-
-# আপনার দেওয়া এপিআই কি সরাসরি এখানে সুরক্ষিত থাকবে
-OPENROUTER_API_KEY = "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"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -29,51 +26,31 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- OpenRouter এপিআই গেটওয়ে (স্টেবল সংস্করণ) ---
+# --- সম্পূর্ণ ফ্রি ও সরাসরি এআই প্রোভাইডার (কোনো API Key লাগবে না) ---
 def get_ai_response(user_message):
-    url = "https://openrouter.ai"
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com", # ওপেনরাউটার ট্র্যাকিং রিকোয়ারমেন্ট
-        "X-Title": "Hermes Telegram Bot"
-    }
-    
-    # ফ্রি রাউটার যদি ব্যস্ত থাকে তবে ব্যাকআপ হিসেবে লিনাক্স-অপ্টিমাইজড ফ্রি মেটা রাউটার
-    payload = {
-        "model": "openrouter/free", 
-        "messages": [
-            {"role": "system", "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"},
-            {"role": "user", "content": user_message}
-        ]
-    }
-    
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=25)
-        response_json = response.json()
+        # বিশ্বের অন্যতম বিখ্যাত ফ্রি টেস্ট গেটওয়ে (Pollinations AI) ব্যবহার করছি যা সর্বদা সচল থাকে
+        system_prompt = "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
         
-        if 'choices' in response_json and len(response_json['choices']) > 0:
-            return response_json['choices']['message']['content']
+        # URL এ সঠিকভাবে প্রম্পট পাঠানোর জন্য ফরম্যাটিং
+        url = f"https://pollinations.ai{requests.utils.quote(user_message)}?system={requests.utils.quote(system_prompt)}&model=openai"
         
-        # যদি প্রথম মডেল রেসপন্স না করে তবে অটোম্যাটিক ব্যাকআপ ফ্রি মডেল ২
-        elif 'error' in response_json:
-            print(f"Primary Model Busy. Switching to Backup Model... Error: {response_json['error']}")
-            payload["model"] = "google/gemini-2.5-flash:free"
-            response = requests.post(url, headers=headers, json=payload, timeout=25)
-            return response.json()['choices']['message']['content']
-            
+        response = requests.get(url, timeout=20)
+        
+        if response.status_code == 200 and response.text:
+            return response.text.strip()
         else:
-            return "দুঃখিত, এআই প্রোভাইডার এই মুহূর্তে ফ্রি লাইনে অতিরিক্ত ট্রাফিকের সম্মুখীন হচ্ছে। অনুগ্রহ করে আর একবার মেসেজটি পাঠান।"
+            return "দুঃখিত, এআই প্রসেসিংয়ে কিছুটা সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।"
             
     except Exception as e:
         print(f"Error Details: {e}")
-        return "কানেকশন ওভারলোডেড। দয়া করে আর একবার মেসেজটি পাঠান, আমি ঠিক হয়ে যাব।"
+        return "কানেকশন সাময়িকভাবে ব্যাহত হয়েছে। অনুগ্রহ করে আর একবার মেসেজ দিন।"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো! আমি আপনার অফিসিয়াল হার্মিস এআই এজেন্ট। আমি এখন শতভাগ সচল! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
+    await update.message.reply_text("হ্যালো! আমি আপনার ২৪/৭ হার্মিস এআই এজেন্ট। কোনো এপিআই কি ছাড়াই আমি এখন সম্পূর্ণ অ্যাক্টিভ! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
