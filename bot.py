@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- কনফিগারেশন ---
+# --- আপনার দেওয়া কনফিগারেশন ---
 OPENROUTER_API_KEY = "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"
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
@@ -27,7 +27,7 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- OpenRouter AI API ---
+# --- OpenRouter AI API (১০০% ফ্রি মডেল সংস্করণ) ---
 def get_hermes_response(user_message):
     url = "https://openrouter.ai"
     headers = {
@@ -35,7 +35,8 @@ def get_hermes_response(user_message):
         "Content-Type": "application/json"
     }
     data = {
-        "model": "nousresearch/hermes-3-llama-3-8b", 
+        # সম্পূর্ণ ফ্রি মডেল যা কোনো ব্যালেন্স ছাড়াই আজীবন চলবে
+        "model": "meta-llama/llama-3.1-8b-instruct:free", 
         "messages": [
             {"role": "system", "content": "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"},
             {"role": "user", "content": user_message}
@@ -43,8 +44,18 @@ def get_hermes_response(user_message):
     }
     try:
         response = requests.post(url, headers=headers, json=data)
-        return response.json()['choices']['message']['content']
+        response_json = response.json()
+        
+        # যদি এপিআই থেকে সঠিক রেসপন্স আসে
+        if 'choices' in response_json and len(response_json['choices']) > 0:
+            return response_json['choices']['message']['content']
+        else:
+            # আসল ভুলটি লগ ফাইলে প্রিন্ট করার জন্য
+            print(f"API Error Details: {response_json}")
+            return "দুঃখিত, ওপেনরাউটার এপিআই থেকে কোনো উত্তর পাওয়া যায়নি।"
+            
     except Exception as e:
+        print(f"Error: {e}")
         return "দুঃখিত, এই মুহূর্তে আমি কোনো উত্তর তৈরি করতে পারছি না।"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -55,7 +66,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
-        await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন。")
+        await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     ai_reply = get_hermes_response(update.message.text)
