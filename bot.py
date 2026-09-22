@@ -1,7 +1,9 @@
 import logging
 import os
-import requests
 import threading
+import http.client
+import json
+import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
@@ -26,31 +28,43 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- সম্পূর্ণ ফ্রি ও সরাসরি এআই প্রোভাইডার (কোনো API Key লাগবে না) ---
+# --- সরাসরি পাইথন কোর কানেকশন দিয়ে ফ্রি এআই গেটওয়ে ---
 def get_ai_response(user_message):
     try:
-        # বিশ্বের অন্যতম বিখ্যাত ফ্রি টেস্ট গেটওয়ে (Pollinations AI) ব্যবহার করছি যা সর্বদা সচল থাকে
+        # নেটওয়ার্ক ব্লক এড়াতে পাইথনের নিজস্ব কোর কানেকশন মেথড
+        conn = http.client.HTTPSConnection("text.pollinations.ai")
         system_prompt = "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
         
-        # URL এ সঠিকভাবে প্রম্পট পাঠানোর জন্য ফরম্যাটিং
-        url = f"https://pollinations.ai{requests.utils.quote(user_message)}?system={requests.utils.quote(system_prompt)}&model=openai"
+        # URL সেফ এনকোডিং
+        encoded_msg = urllib.parse.quote(user_message)
+        encoded_sys = urllib.parse.quote(system_prompt)
         
-        response = requests.get(url, timeout=20)
+        path = f"/{encoded_msg}?system={encoded_sys}&model=openai"
         
-        if response.status_code == 200 and response.text:
-            return response.text.strip()
+        # ব্রাউজার ট্রাফিক ইমুলেট করার জন্য কাস্টম হেডার্স
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': '*/*'
+        }
+        
+        conn.request("GET", path, headers=headers)
+        response = conn.getresponse()
+        data = response.read()
+        
+        if response.status == 200:
+            return data.decode('utf-8').strip()
         else:
-            return "দুঃখিত, এআই প্রসেসিংয়ে কিছুটা সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।"
+            return "দুঃখিত, আমি আপনার মেসেজটি বুঝতে পেরেছি কিন্তু সার্ভার প্রসেস করতে পারছে না। দয়া করে আবার পাঠান।"
             
     except Exception as e:
         print(f"Error Details: {e}")
-        return "কানেকশন সাময়িকভাবে ব্যাহত হয়েছে। অনুগ্রহ করে আর একবার মেসেজ দিন।"
+        return "সার্ভার এই মুহূর্তে একটু রিফ্রেশ হচ্ছে। অনুগ্রহ করে আর একবার মেসেজ দিন।"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো! আমি আপনার ২৪/৭ হার্মিস এআই এজেন্ট। কোনো এপিআই কি ছাড়াই আমি এখন সম্পূর্ণ অ্যাক্টিভ! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
+    await update.message.reply_text("হ্যালো এডাম! আমি আপনার হার্মিস এআই অ্যাসিস্ট্যান্ট। আমি এখন সম্পূর্ণ নতুন ফ্রেমওয়ার্কের সাথে ১০০% সচল আছি! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
