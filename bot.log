@@ -1,20 +1,4 @@
 nohup: ignoring input
-2026-09-22 06:59:05,312 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getMe "HTTP/1.1 200 OK"
-2026-09-22 06:59:05,664 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/deleteWebhook "HTTP/1.1 200 OK"
-2026-09-22 06:59:05,665 - telegram.ext.Application - INFO - Application started
-2026-09-22 06:59:16,205 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-2026-09-22 06:59:17,083 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-2026-09-22 06:59:17,784 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/sendChatAction "HTTP/1.1 200 OK"
-2026-09-22 06:59:19,370 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/sendMessage "HTTP/1.1 200 OK"
-2026-09-22 06:59:27,264 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-2026-09-22 06:59:37,443 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-127.0.0.1 - - [22/Sep/2026 06:59:38] code 501, message Unsupported method ('HEAD')
-127.0.0.1 - - [22/Sep/2026 06:59:38] "HEAD / HTTP/1.1" 501 -
-2026-09-22 06:59:47,624 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-2026-09-22 06:59:57,805 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-2026-09-22 07:00:07,990 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-2026-09-22 07:00:13,093 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getUpdates "HTTP/1.1 200 OK"
-2026-09-22 07:00:13,094 - telegram.ext.Application - INFO - Application is stopping. This might take a moment.
-2026-09-22 07:00:13,094 - telegram.ext.Application - INFO - Application.stop() complete
-Web Server active on port 8080
-হার্মিস বটটি সফলভাবে চালু হয়েছে...
+2026-09-22 07:01:30,265 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/getMe "HTTP/1.1 200 OK"
+2026-09-22 07:01:30,445 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM/deleteWebhook "HTTP/1.1 200 OK"
+2026-09-22 07:01:30,447 - telegram.ext.Application - INFO - Application started
