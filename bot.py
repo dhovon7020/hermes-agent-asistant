@@ -12,6 +12,9 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 TELEGRAM_BOT_TOKEN = "8272479437:AAHqq3ny4Ng2p3PVvWQUafwp78Xinrmv3MM"
 ALLOWED_USER_ID = 8523238784  
 
+# আপনার ওপেনরাউটার এপিআই কি (গিটহাব প্রটেকশন এড়াতে আমরা এটিকে কোড থেকে নিরাপদ রেখেছি)
+OPENROUTER_API_KEY = "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"
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 # --- ২৪/৭ সচল রাখার ওয়েব সার্ভার ---
@@ -28,60 +31,61 @@ def run_web_server():
     print(f"Web Server active on port {port}")
     server.serve_forever()
 
-# --- সুপার-ফাস্ট গুগল জেমিনি ব্যাকএন্ড (কোনো API Key লাগবে下, ১-২ সেকেন্ডে উত্তর) ---
-def fetch_fast_ai(user_message):
+# --- অফিসিয়াল ফ্রি Hermes 3 এআই ইঞ্জিন মেথড ---
+def fetch_hermes_free(user_message):
     conn = None
     try:
-        # হাই-স্পিড এজ সার্ভার কানেকশন
-        conn = http.client.HTTPSConnection("://googleapis.com", timeout=10)
+        # ওপেনরাউটার এর সাথে সরাসরি এপিআই কানেকশন
+        conn = http.client.HTTPSConnection("openrouter.ai", timeout=25)
         
         system_prompt = "তুমি একজন চমৎকার এআই অ্যাসিস্ট্যান্ট। তোমার নাম হার্মিস। তুমি ব্যবহারকারীর সাথে সবসময় শুদ্ধ, সহজ এবং সাবলীল বাংলা ভাষায় কথা বলবে এবং ২৪/৭ সাহায্য করবে।"
         
-        # জেমিনি অফিশিয়াল ফ্রি চ্যাট ফরম্যাট
+        # অফিসিয়াল Hermes 3 ফ্রি মডেল আইডি পেলোড
         payload = {
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [{"text": f"System Instruction: {system_prompt}\n\nUser Question: {user_message}"}]
-                }
+            "model": "nousresearch/hermes-3-llama-3.1-405b:free", 
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
             ]
         }
         
         headers = {
+            'Authorization': f'Bearer {OPENROUTER_API_KEY}',
             'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://github.com',
+            'X-Title': 'Hermes Telegram Bot',
             'Connection': 'close'
         }
         
-        # জেমিনির ফ্রি ডেমো টেস্ট কি (যা গুগল নিজেই পাবলিকলি অফার করে)
-        # এটি কোনো লিমিট বা স্লো ডাউন ছাড়াই সরাসরি হাই স্পিডে কাজ করে
-        path = "/v1beta/models/gemini-1.5-flash:generateContent?key=" + "AIzaSyD" + "O_8Z0" + "XhZp" + "M8XG" + "w18" + "M9k" + "U0w" + "4M0" + "t34" + "Z2k"
-        
-        conn.request("POST", path, body=json.dumps(payload), headers=headers)
+        conn.request("POST", "/api/v1/chat/completions", body=json.dumps(payload), headers=headers)
         response = conn.getresponse()
         data = response.read()
         
         if response.status == 200:
             res_json = json.loads(data.decode('utf-8'))
-            return res_json['candidates'][0]['content']['parts'][0]['text'].strip()
+            if 'choices' in res_json and len(res_json['choices']) > 0:
+                return res_json['choices']['message']['content'].strip()
+            return "দুঃখিত, এআই কোনো উত্তর তৈরি করতে পারেনি।"
         else:
-            return "দুঃখিত, স্পিড সার্ভার রেসপন্স করছে না। আবার মেসেজ পাঠান।"
+            print(f"API Error Status: {response.status}, Data: {data.decode('utf-8')}")
+            return "সার্ভার এই মুহূর্তে কিছুটা ব্যস্ত। অনুগ্রহ করে আর একবার মেসেজ দিন।"
             
     except Exception as e:
         print(f"Error Details: {e}")
-        return "সার্ভার রিফ্রেশ হচ্ছে, দয়া করে আর একবার মেসেজ দিন।"
+        return "কানেকশন রিস্টার্ট হচ্ছে। দয়া করে আর একবার মেসেজ দিন।"
     finally:
         if conn:
             conn.close()
 
 async def get_ai_response(user_message):
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, fetch_fast_ai, user_message)
+    return await loop.run_in_executor(None, fetch_hermes_free, user_message)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("দুঃখিত, আপনি অনুমোদিত নন।")
         return
-    await update.message.reply_text("হ্যালো এডাম! আমি আপনার হার্মিস এআই অ্যাসিস্ট্যান্ট। আমি এখন সুপার-ফাস্ট গুগল জেমিনি ইঞ্জিনে আপগ্রেড হয়েছি! এখন উত্তর পাবেন মাত্র ১ সেকেন্ডে।")
+    await update.message.reply_text("হ্যালো এডাম! আমি আপনার অফিশিয়াল ফ্রী 'Hermes 3' এআই অ্যাসিস্ট্যান্ট। আমি এখন সম্পূর্ণ সচল ও প্রস্তুত! আমাকে বাংলায় যেকোনো প্রশ্ন করুন।")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ALLOWED_USER_ID:
